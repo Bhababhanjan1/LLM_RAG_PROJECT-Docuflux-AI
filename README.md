@@ -1,987 +1,1088 @@
-# 🚀 RAG Pipeline --- FastAPI + Docker + Azure
+# 🚀 DocuFlux AI
 
-```{=html}
+### 📚 Intelligent Document Question Answering with Retrieval-Augmented Generation
+
 <p align="center">
-```
-`<strong>`{=html}Production-style Retrieval-Augmented Generation
-API`</strong>`{=html}`<br/>`{=html} Upload PDFs → Ingest into Pinecone →
-Retrieve relevant context → Generate answers with Groq
-```{=html}
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-000000?style=for-the-badge)
+![Groq](https://img.shields.io/badge/Groq-LLM-F55036?style=for-the-badge)
+![Sentence Transformers](https://img.shields.io/badge/Sentence--Transformers-Embeddings-FF6F00?style=for-the-badge)
+![RAG](https://img.shields.io/badge/Architecture-RAG-8B5CF6?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
+![Azure](https://img.shields.io/badge/Azure-Ready-0078D4?style=for-the-badge\&logo=microsoftazure\&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
 </p>
-```
-```{=html}
+
 <p align="center">
-```
-`<img src="https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>`{=html}
-`<img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>`{=html}
-`<img src="https://img.shields.io/badge/Pinecone-Vector_DB-000000?style=for-the-badge" alt="Pinecone"/>`{=html}
-`<img src="https://img.shields.io/badge/Groq-LLM_API-F55036?style=for-the-badge" alt="Groq"/>`{=html}
-`<img src="https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>`{=html}
-`<img src="https://img.shields.io/badge/Azure-Ready-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Azure"/>`{=html}
-```{=html}
+
+**Turn your PDFs into a searchable, intelligent knowledge base.**
+
+Upload documents → Build a vector index → Ask questions → Get grounded AI answers.
+
 </p>
+
+---
+
+# 🌌 What is DocuFlux AI?
+
+**DocuFlux AI** is an end-to-end **Retrieval-Augmented Generation (RAG)** application that allows users to upload PDF documents and interact with their contents using natural language.
+
+Instead of sending an entire document directly to an LLM, DocuFlux AI:
+
+1. 📄 Extracts text from PDFs
+2. ✂️ Splits the text into manageable chunks
+3. 🧠 Converts chunks into vector embeddings
+4. 🗃️ Stores embeddings inside Pinecone
+5. 🔎 Performs semantic similarity search
+6. 🎯 Retrieves the most relevant chunks
+7. 🤖 Sends retrieved context to Groq
+8. 💬 Generates a grounded answer
+9. 📌 Displays source document and page information
+
+The core pipeline is explicitly organized into ingestion, retrieval, and answer-generation stages.
+
+---
+
+# ✨ Why DocuFlux AI?
+
+Traditional document search depends heavily on exact keywords.
+
+DocuFlux AI uses **semantic search**.
+
+For example:
+
+> **User:** "What are the main causes of climate change?"
+
+Even if the PDF contains:
+
+> "Major contributors to global warming include greenhouse gas emissions..."
+
+the system can retrieve the relevant passage because the meaning is similar — not necessarily because the exact words match.
+
+---
+
+# 🧠 RAG at a Glance
+
+```text
+                     ┌──────────────────────┐
+                     │      PDF DOCUMENT    │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │     PDF LOADER       │
+                     │       PyPDF          │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │    TEXT SPLITTER     │
+                     │  Chunk = 500 chars   │
+                     │ Overlap = 50 chars   │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │    EMBEDDING MODEL   │
+                     │ all-MiniLM-L6-v2     │
+                     │     384 dimensions   │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                 ┌──────────────────────────────┐
+                 │          PINECONE            │
+                 │       Vector Database        │
+                 │        Cosine Search         │
+                 └──────────────┬───────────────┘
+                                │
+                         Top-K Retrieval
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │     GROQ LLM         │
+                     │  Grounded Generation │
+                     └──────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │      AI ANSWER       │
+                     │ + Source + Page      │
+                     └──────────────────────┘
 ```
-```{=html}
-<p align="center">
-```
-`<img src="https://img.shields.io/badge/RAG-Retrieval%20%2B%20Generation-7B61FF?style=flat-square" alt="RAG"/>`{=html}
-`<img src="https://img.shields.io/badge/Sentence--Transformers-Embeddings-orange?style=flat-square" alt="Sentence Transformers"/>`{=html}
-`<img src="https://img.shields.io/badge/PDF-Ingestion-red?style=flat-square" alt="PDF"/>`{=html}
-`<img src="https://img.shields.io/badge/REST-API-02569B?style=flat-square" alt="REST API"/>`{=html}
-```{=html}
-</p>
-```
 
-------------------------------------------------------------------------
-
-## ✨ Overview
-
-This project is the **web-service version of a RAG pipeline**.
-
-It keeps the same core retrieval + generation workflow --- using
-**Pinecone**, **sentence-transformers**, and **Groq** --- and wraps it
-inside a **FastAPI application** with a browser-based interface.
-
-The application is designed to:
-
--   📄 Upload PDF documents
--   🔍 Ingest and index document content
--   🧠 Generate embeddings with sentence-transformers
--   🗂️ Store/search vectors in Pinecone
--   🤖 Send retrieved context to Groq for answer generation
--   💬 Ask questions through a browser UI
--   📚 Return generated answers with source citations
--   🐳 Run locally inside Docker
--   ☁️ Deploy as a container to Azure
-
-> **Core idea:** FastAPI is the HTTP/web layer around the existing RAG
-> orchestration. The underlying `pipeline.ingest()` and `pipeline.ask()`
-> workflow remains the central engine.
-
-------------------------------------------------------------------------
-
-# 🧠 What is RAG?
-
-**Retrieval-Augmented Generation (RAG)** combines information retrieval
-with an LLM.
-
-Instead of asking the LLM to answer only from its internal knowledge,
-the system first retrieves relevant information from your document
-collection and then provides that information as context to the LLM.
-
-### 🔄 High-level flow
-
-``` text
-             📄 PDF DOCUMENT
-                    │
-                    ▼
-             ┌──────────────┐
-             │   Load PDF   │
-             └──────┬───────┘
-                    │
-                    ▼
-             ✂️ Split / Chunk
-                    │
-                    ▼
-             🧠 Embeddings
-          sentence-transformers
-                    │
-                    ▼
-             📌 Pinecone
-             Vector Store
-                    │
-                    │  Similarity Search
-                    ▼
-             🔎 Relevant Chunks
-                    │
-                    ▼
-             🤖 Groq LLM
-                    │
-                    ▼
-          💬 Answer + Sources
-```
-
-------------------------------------------------------------------------
+---
 
 # 🏗️ System Architecture
 
-``` mermaid
-flowchart TB
-    U["👤 User"] --> UI["🌐 Browser UI<br/>FastAPI Templates"]
+```mermaid
+flowchart LR
 
-    UI --> API["⚡ FastAPI"]
+    A["📄 PDF Documents"] --> B["⚡ FastAPI"]
 
-    API --> INGEST["📥 /api/ingest"]
-    API --> ASK["❓ /api/ask"]
-    API --> HEALTH["❤️ /api/health"]
+    B --> C["📚 PDF Loader"]
+    C --> D["✂️ Text Splitter"]
 
-    INGEST --> PIPE["🧩 RAG Pipeline"]
-    ASK --> PIPE
+    D --> E["🧠 Sentence Transformer"]
+    E --> F["📐 384-D Embeddings"]
 
-    PIPE --> LOAD["📄 Loaders"]
-    LOAD --> SPLIT["✂️ Splitters"]
-    SPLIT --> EMB["🧠 Sentence-Transformer<br/>Embeddings"]
-    EMB --> PC["📌 Pinecone<br/>Vector Database"]
+    F --> G[("🌲 Pinecone\nVector Database")]
 
-    ASK --> RET["🔎 Similarity Retrieval"]
-    RET --> PC
-    RET --> CTX["📚 Retrieved Context"]
-    CTX --> GROQ["🤖 Groq<br/>Llama Model"]
-    GROQ --> ANSWER["💬 Generated Answer"]
-    ANSWER --> UI
+    Q["👤 User Question"] --> B
+    B --> H["🧠 Query Embedding"]
+    H --> G
 
-    CONFIG["⚙️ config.py + .env"] --> API
-    CONFIG --> PIPE
+    G --> I["🔎 Top-K Similar Chunks"]
 
-    DOCKER["🐳 Docker"] --> API
-    API --> AZ["☁️ Azure Container Platform"]
+    I --> J["🤖 Groq LLM"]
+
+    J --> K["💬 Grounded Answer"]
+    I --> K
+
+    K --> L["📌 Sources + Page Numbers"]
 ```
 
-------------------------------------------------------------------------
+---
 
-# 🔥 End-to-End Request Flow
+# 🔥 Core Architecture
 
 ## 1️⃣ Document Ingestion
 
-``` mermaid
+```text
+PDF
+ │
+ ▼
+PDFLoader
+ │
+ ▼
+Extract text
+ │
+ ▼
+Page metadata
+ │
+ ▼
+TextSplitter
+ │
+ ▼
+Chunks
+```
+
+The PDF loader extracts text page-by-page and preserves metadata including the original filename and page number.
+
+---
+
+## 2️⃣ Chunking
+
+DocuFlux AI uses a lightweight recursive character splitter.
+
+### Current configuration
+
+| Parameter     |                                          Value |
+| ------------- | ---------------------------------------------: |
+| Chunk Size    |                                          `500` |
+| Chunk Overlap |                                           `50` |
+| Separators    | Paragraph → Line → Sentence → Word → Character |
+
+The splitter recursively breaks large text while preserving overlap between neighboring chunks.
+
+```text
+Original Document
+
+████████████████████████████████████████████████████
+
+        ↓
+
+Chunk 1
+████████████████████
+
+              Chunk 2
+              ████████████████████
+
+                            Chunk 3
+                            ████████████████████
+
+       ←── overlap ──→
+```
+
+The overlap helps preserve contextual continuity between chunks.
+
+---
+
+# 🧠 Embedding Layer
+
+DocuFlux AI uses **Sentence Transformers** to convert text into numerical vectors.
+
+Current default model:
+
+```text
+all-MiniLM-L6-v2
+```
+
+Dimension:
+
+```text
+384
+```
+
+The embedding wrapper provides separate methods for document embeddings and query embeddings and obtains the model's embedding dimension dynamically.
+
+```text
+Text
+ │
+ ▼
+Sentence Transformer
+ │
+ ▼
+[0.021, -0.184, 0.763, ...]
+ │
+ ▼
+384-dimensional vector
+```
+
+---
+
+# 🌲 Pinecone Vector Database
+
+Pinecone stores the generated embeddings and their metadata.
+
+Each vector contains:
+
+```text
+{
+    id,
+    values,
+    metadata
+}
+```
+
+Metadata includes:
+
+```text
+source
+page
+chunk_id
+text
+```
+
+The Pinecone layer uses a serverless index and cosine similarity for vector search.
+
+### Retrieval
+
+```text
+User Question
+      │
+      ▼
+Query Embedding
+      │
+      ▼
+Pinecone Similarity Search
+      │
+      ▼
+Top-K Relevant Chunks
+```
+
+The current retrieval implementation defaults to:
+
+```text
+TOP_K = 4
+```
+
+and returns the retrieved text, source, page and similarity score.
+
+---
+
+# 🤖 Groq Generation
+
+After retrieving relevant chunks, DocuFlux AI sends them to a Groq-hosted LLM.
+
+The generator builds a context containing:
+
+```text
+[Source 1: document.pdf, page 4]
+...
+
+[Source 2: document.pdf, page 7]
+...
+```
+
+and instructs the model to answer using only the provided context. If the context doesn't contain the answer, the system is instructed to respond:
+
+> "I don't have enough information to answer that."
+
+This grounding behavior is implemented directly in the Groq generator.
+
+---
+
+# 🔄 Complete RAG Flow
+
+```mermaid
 sequenceDiagram
-    participant User
-    participant Browser
-    participant FastAPI
-    participant Pipeline
-    participant Embedder
-    participant Pinecone
 
-    User->>Browser: Select PDF
-    Browser->>FastAPI: POST /api/ingest
-    FastAPI->>Pipeline: pipeline.ingest()
-    Pipeline->>Pipeline: Load + split document
-    Pipeline->>Embedder: Generate embeddings
-    Embedder-->>Pipeline: Vector representations
-    Pipeline->>Pinecone: Upsert vectors + metadata
-    Pinecone-->>Pipeline: Success
-    Pipeline-->>FastAPI: Ingestion result
-    FastAPI-->>Browser: Response
+    participant U as 👤 User
+    participant F as ⚡ FastAPI
+    participant P as 📄 PDF Loader
+    participant S as ✂️ Splitter
+    participant E as 🧠 Embedder
+    participant PC as 🌲 Pinecone
+    participant G as 🤖 Groq
+
+    U->>F: Upload PDF
+    F->>P: Load document
+    P-->>F: Extract text + metadata
+
+    F->>S: Split document
+    S-->>F: Text chunks
+
+    F->>E: Generate embeddings
+    E-->>F: 384-D vectors
+
+    F->>PC: Upsert vectors
+    PC-->>F: Indexed
+
+    U->>F: Ask question
+    F->>E: Embed question
+    E-->>F: Query vector
+
+    F->>PC: Similarity search
+    PC-->>F: Top-K chunks
+
+    F->>G: Question + retrieved context
+    G-->>F: Grounded answer
+
+    F-->>U: Answer + sources
 ```
 
-## 2️⃣ Question Answering
+---
 
-``` mermaid
-sequenceDiagram
-    participant User
-    participant Browser
-    participant FastAPI
-    participant Pipeline
-    participant Pinecone
-    participant Groq
+# 🖥️ User Interface
 
-    User->>Browser: Ask question
-    Browser->>FastAPI: POST /api/ask
-    FastAPI->>Pipeline: pipeline.ask()
-    Pipeline->>Pinecone: Similarity search
-    Pinecone-->>Pipeline: Relevant chunks
-    Pipeline->>Groq: Question + retrieved context
-    Groq-->>Pipeline: Generated answer
-    Pipeline-->>FastAPI: Answer + sources
-    FastAPI-->>Browser: JSON response
+DocuFlux AI includes a modern dark-themed document command center.
+
+The UI provides:
+
+### 📚 Document Vault
+
+* Drag & drop PDF upload
+* Multiple PDF selection
+* PDF validation
+* Knowledge-index creation
+* Ingestion status
+
+### 💬 AI Research Desk
+
+* Natural-language questions
+* AI-generated answers
+* Retrieved source information
+* Page numbers
+* Similarity scores
+
+The frontend calls:
+
+```text
+POST /api/ingest
+POST /api/ask
 ```
 
-------------------------------------------------------------------------
-
-# 📁 Project Structure
-
-``` text
-rag_pipeline_fastapi/
-│
-├── main.py
-│   └── FastAPI application
-│       ├── Browser UI
-│       ├── /api/ingest
-│       ├── /api/ask
-│       └── /api/health
-│
-├── pipeline.py
-│   └── Core RAG orchestration
-│
-├── config.py
-│   └── Environment/settings configuration
-│
-├── Dockerfile
-│   └── Container image definition
-│
-├── .dockerignore
-│   └── Files excluded from Docker build context
-│
-├── templates/
-│   └── index.html
-│       └── Browser chat/upload interface
-│
-├── static/
-│   └── CSS / JS assets
-│
-├── loaders/
-│   └── Document loading modules
-│
-├── splitters/
-│   └── Document chunking modules
-│
-├── embeddings/
-│   └── Embedding generation modules
-│
-├── vectorstores/
-│   └── Pinecone integration
-│
-├── generators/
-│   └── LLM generation modules
-│
-├── requirements.txt
-│   └── Python dependencies
-│
-└── .env
-    └── Local secrets/configuration
-```
-
-------------------------------------------------------------------------
-
-# 🧩 Technology Stack
-
-  Layer           Technology              Purpose
-  --------------- ----------------------- -----------------------------
-  🐍 Language     Python                  Application logic
-  ⚡ API          FastAPI                 HTTP API + web server
-  🖥️ UI           HTML / Templates        Browser interface
-  📄 Documents    PDF                     Input knowledge source
-  🧠 Embeddings   sentence-transformers   Convert text into vectors
-  📌 Vector DB    Pinecone                Store and retrieve vectors
-  🤖 LLM          Groq / Llama            Generate answers
-  🐳 Container    Docker                  Package and run application
-  ☁️ Cloud        Azure                   Container deployment
-
-------------------------------------------------------------------------
-
-# 🖥️ Application UI
-
-The FastAPI application provides a browser interface with two main
-workflows:
-
-### 📤 Document Upload
-
-``` text
-┌───────────────────────────────────────────────────────┐
-│                    📚 RAG ARCHIVE                     │
-│                                                       │
-│     ┌───────────────────────────────────────────┐     │
-│     │        📄 Drop PDF files here             │     │
-│     │                                           │     │
-│     │              [ Choose Files ]             │     │
-│     └───────────────────────────────────────────┘     │
-│                                                       │
-│              [ Ingest into archive ]                  │
-└───────────────────────────────────────────────────────┘
-```
-
-### 💬 Question Answering
-
-``` text
-┌───────────────────────────────────────────────────────┐
-│                   💬 ASK YOUR DOCUMENTS               │
-│                                                       │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │ What does the document say about ...?           │  │
-│  └─────────────────────────────────────────────────┘  │
-│                                                       │
-│                       [ Ask ]                         │
-│                                                       │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │ 🤖 Answer                                       │  │
-│  │                                                 │  │
-│  │ Retrieved information is used to generate the   │  │
-│  │ answer.                                         │  │
-│  │                                                 │  │
-│  │ 📚 Sources                                      │  │
-│  │ • document/page/chunk ...                       │  │
-│  └─────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────┘
-```
-
-------------------------------------------------------------------------
+## and displays retrieved source/page information below answers.
 
 # 📸 Screenshots
 
-> The actual screenshots of your running application are intentionally
-> **not fabricated**. Add your real screenshots to the paths below after
-> running the project.
+> Add your actual application screenshots here after running the project.
 
-Create:
+### 🏠 DocuFlux AI Dashboard
 
-``` text
+```text
 docs/
 └── screenshots/
-    ├── home.png
-    ├── document-ingestion.png
-    ├── question-answering.png
-    └── api-response.png
+    ├── dashboard.png
+    ├── document-upload.png
+    ├── ingestion.png
+    └── rag-answer.png
 ```
 
 Then add them to this README:
 
-### 🏠 Home / Chat UI
-
-![RAG Pipeline Home UI](docs/screenshots/home.png)
-
-### 📄 PDF Ingestion
-
-![PDF Ingestion](docs/screenshots/document-ingestion.png)
-
-### 💬 Question Answering
-
-![Question Answering](docs/screenshots/question-answering.png)
-
-### 🔌 API Response
-
-![API Response](docs/screenshots/api-response.png)
-
-------------------------------------------------------------------------
-
-# ⚙️ Environment Variables
-
-Create a `.env` file from `.env.example`:
-
-``` bash
-cp .env.example .env
+```markdown
+![DocuFlux AI Dashboard](docs/screenshots/dashboard.png)
 ```
 
-Configure the required API credentials:
+### Recommended screenshots
 
-``` env
+| Screenshot   | What to capture               |
+| ------------ | ----------------------------- |
+| 🏠 Dashboard | Main DocuFlux AI interface    |
+| 📄 Upload    | PDF upload screen             |
+| ⚙️ Ingestion | Successful indexing           |
+| 💬 Question  | User asking a question        |
+| 🤖 Answer    | Grounded AI response          |
+| 📌 Sources   | Answer with source/page/score |
+| 🌲 Pinecone  | Indexed vectors               |
+| 🐳 Docker    | Running container             |
+| ☁️ Azure     | Deployed application          |
+
+---
+
+# 📁 Project Structure
+
+```text
+DocuFlux-AI/
+│
+├── main.py
+├── pipeline.py
+├── config.py
+│
+├── loaders/
+│   └── pdf_loader.py
+│
+├── splitters/
+│   └── text_splitter.py
+│
+├── embeddings/
+│   └── sentence_transformer.py
+│
+├── vectorstores/
+│   └── pinecone_store.py
+│
+├── generators/
+│   └── groq_generator.py
+│
+├── templates/
+│   └── index.html
+│
+├── data/
+│   └── *.pdf
+│
+├── tests/
+│   └── test_pinecone_store.py
+│
+├── requirements.txt
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+├── .env
+└── README.md
+```
+
+---
+
+# 🧩 Component Responsibilities
+
+| Component                 | Responsibility                      |
+| ------------------------- | ----------------------------------- |
+| `main.py`                 | FastAPI application + API endpoints |
+| `pipeline.py`             | Connects all RAG components         |
+| `config.py`               | Environment-based configuration     |
+| `pdf_loader.py`           | Extracts PDF text                   |
+| `text_splitter.py`        | Creates overlapping chunks          |
+| `sentence_transformer.py` | Generates embeddings                |
+| `pinecone_store.py`       | Vector storage + similarity search  |
+| `groq_generator.py`       | Generates grounded answers          |
+| `index.html`              | Web interface                       |
+| `test_pinecone_store.py`  | Pinecone behavior testing           |
+
+The FastAPI application exposes the web UI, ingestion endpoint, question-answering endpoint and health endpoint.
+
+---
+
+# 🌐 API Endpoints
+
+## `GET /`
+
+Returns the DocuFlux AI web interface.
+
+---
+
+## `POST /api/ingest`
+
+Uploads and indexes PDF files.
+
+### Request
+
+```text
+multipart/form-data
+files = PDF files
+```
+
+### Response
+
+```json
+{
+  "message": "Ingested 1 file(s) successfully",
+  "files": ["document.pdf"],
+  "chunks_indexed": 42
+}
+```
+
+---
+
+## `POST /api/ask`
+
+Ask a question about indexed documents.
+
+### Request
+
+```json
+{
+  "question": "What is the main topic of this document?",
+  "top_k": 4
+}
+```
+
+### Response
+
+```json
+{
+  "answer": "The document mainly discusses...",
+  "sources": [
+    {
+      "text": "...",
+      "source": "document.pdf",
+      "page": 3,
+      "score": 0.87
+    }
+  ]
+}
+```
+
+---
+
+## `GET /api/health`
+
+Health-check endpoint:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+This is particularly useful when deploying the application to cloud infrastructure such as Azure.
+
+---
+
+# ⚙️ Configuration
+
+Create a `.env` file:
+
+```env
 PINECONE_API_KEY=your_pinecone_api_key
+
+PINECONE_INDEX_NAME=langchain-rag-384
+PINECONE_CLOUD=aws
+PINECONE_REGION=us-east-1
+
+EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
+EMBEDDING_DIMENSION=384
+
+CHUNK_SIZE=500
+CHUNK_OVERLAP=50
+
+TOP_K=4
+
 GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=openai/gpt-oss-120b
+
+DATA_DIR=./data
 ```
 
-### 🔐 Security rule
+### 🔐 Important
 
-**Never bake API keys into the Docker image or commit `.env` to Git.**
+Never commit your `.env` file.
 
-Use environment variables/secrets at runtime.
+Add:
 
-------------------------------------------------------------------------
+```text
+.env
+```
 
-# 🚀 Run Locally
+to `.gitignore`.
+
+The project's configuration layer is already designed around environment variables so API secrets don't need to be hardcoded.
+
+---
+
+# 📦 Requirements
+
+Current project dependencies:
+
+```txt
+pinecone>=3.0.0
+sentence-transformers>=2.2.2
+pypdf>=4.0.0
+python-dotenv>=1.0.0
+numpy>=1.24.0
+requests>=2.31.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+jinja2>=3.1.3
+groq>=0.11.0
+```
+
+---
+
+# 🚀 Installation
 
 ## 1. Clone the repository
 
-``` bash
-git clone <your-repository-url>
-cd rag_pipeline_fastapi
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd DocuFlux-AI
 ```
 
 ## 2. Create a virtual environment
 
 ### Windows
 
-``` bash
-python -m venv .venv
-.venv\Scripts\activate
+```bash
+python -m venv venv
+venv\Scripts\activate
 ```
 
 ### Linux / macOS
 
-``` bash
-python3 -m venv .venv
-source .venv/bin/activate
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
+
+---
 
 ## 3. Install dependencies
 
-``` bash
+```bash
 pip install -r requirements.txt
 ```
+
+---
 
 ## 4. Configure environment variables
 
-``` bash
-cp .env.example .env
+Create:
+
+```text
+.env
 ```
 
-Fill in:
+and add your Pinecone and Groq credentials.
 
-``` env
-PINECONE_API_KEY=...
-GROQ_API_KEY=...
+---
+
+# ▶️ Run Locally
+
+Start the FastAPI server:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## 5. Start FastAPI
+The application will be available at:
 
-``` bash
-uvicorn main:app --reload
-```
-
-Open:
-
-``` text
+```text
 http://localhost:8000
 ```
 
-------------------------------------------------------------------------
+The same command is documented in the application itself for local development.
 
-# 🐳 Run with Docker
+---
 
-## Build the image
+# 📄 Using DocuFlux AI
 
-``` bash
-docker build -t rag-pipeline .
+### Step 1 — Upload
+
+Upload one or more PDF documents.
+
+```text
+📄 Research Paper
+📄 Machine Learning Notes
+📄 Company Report
 ```
 
-## Run the container
+### Step 2 — Build Index
 
-``` bash
-docker run -p 8000:8000 --env-file .env rag-pipeline
+Click:
+
+```text
+BUILD KNOWLEDGE INDEX
 ```
 
-Open:
+The application performs:
 
-``` text
-http://localhost:8000
+```text
+PDF
+ ↓
+Text Extraction
+ ↓
+Chunking
+ ↓
+Embedding
+ ↓
+Pinecone Upsert
 ```
 
-### 🐳 Container architecture
-
-``` text
-                 HOST MACHINE
-                      │
-                      │ :8000
-                      ▼
-        ┌─────────────────────────┐
-        │     Docker Container    │
-        │                         │
-        │   FastAPI Application   │
-        │          │              │
-        │          ▼              │
-        │      RAG Pipeline       │
-        └──────────┬──────────────┘
-                   │
-          ┌────────┴────────┐
-          ▼                 ▼
-      Pinecone             Groq
-      Vector DB            LLM API
-```
-
-------------------------------------------------------------------------
-
-# 🤖 Why Groq Doesn't Need a Local Model
-
-The application uses Groq's hosted inference service.
-
-``` text
-Your Azure / Docker Container
-          │
-          │ HTTPS API request
-          │ + GROQ_API_KEY
-          ▼
-     api.groq.com
-          │
-          ▼
-     Hosted Llama Model
-          │
-          ▼
-    Generated Answer
-```
-
-Therefore, the container does **not** need to download or host the Llama
-model locally.
-
-The container simply makes an API call to Groq.
-
-This keeps the container lightweight compared with hosting a local LLM.
-
-------------------------------------------------------------------------
-
-# 📌 API Reference
-
-  Method   Endpoint        Body                      Purpose
-  -------- --------------- ------------------------- -------------------
-  `GET`    `/`             ---                       Serves browser UI
-  `GET`    `/api/health`   ---                       Health check
-  `POST`   `/api/ingest`   Multipart form, `files`   Ingest PDF files
-  `POST`   `/api/ask`      JSON                      Ask a question
-
-------------------------------------------------------------------------
-
-## ❤️ Health Check
-
-### Request
-
-``` http
-GET /api/health
-```
-
-Useful for checking whether the service is running and for
-container/cloud health probes.
-
-------------------------------------------------------------------------
-
-## 📥 PDF Ingestion
-
-### Request
-
-``` http
-POST /api/ingest
-Content-Type: multipart/form-data
-```
-
-Field:
-
-``` text
-files
-```
-
-The endpoint sends the uploaded PDF(s) through the RAG ingestion
-pipeline and stores the resulting vectors in Pinecone.
-
-------------------------------------------------------------------------
-
-## ❓ Ask a Question
-
-### Request
-
-``` http
-POST /api/ask
-Content-Type: application/json
-```
+### Step 3 — Ask
 
 Example:
 
-``` json
-{
-  "question": "What is the main topic of the document?",
-  "top_k": 4
-}
+```text
+What are the major findings of this document?
 ```
 
-### Response shape
+### Step 4 — Retrieve
 
-``` json
-{
-  "answer": "Generated answer...",
-  "sources": [
-    "source information..."
-  ]
-}
+Pinecone searches for the most semantically similar chunks.
+
+### Step 5 — Generate
+
+Groq generates the final answer using the retrieved context.
+
+### Step 6 — Inspect Sources
+
+The UI displays:
+
+```text
+document.pdf · page 4 · 91% match
+document.pdf · page 7 · 86% match
 ```
 
-------------------------------------------------------------------------
+---
 
-# 🧪 Testing the API with cURL
+# 🧪 Testing
 
-### Health
+The project includes a test for Pinecone upsert/reset behavior using mocked Pinecone components.
 
-``` bash
-curl http://localhost:8000/api/health
+Run:
+
+```bash
+pytest
 ```
 
-### Ask
+The existing test verifies that reset-on-ingest can clear existing vectors before new vectors are inserted.
 
-``` bash
-curl -X POST http://localhost:8000/api/ask \
-  -H "Content-Type: application/json" \
-  -d "{\"question\":\"What is this document about?\",\"top_k\":4}"
+---
+
+# 🐳 Docker
+
+Build the image:
+
+```bash
+docker build -t docuflux-ai .
 ```
 
-### Ingest
+Run:
 
-``` bash
-curl -X POST http://localhost:8000/api/ingest \
-  -F "files=@sample.pdf"
-```
-
-------------------------------------------------------------------------
-
-# ☁️ Azure Deployment Architecture
-
-The same Docker image can be used with multiple Azure container
-services.
-
-``` mermaid
-flowchart LR
-    DEV["👨‍💻 Developer"] --> DOCKER["🐳 Docker Build"]
-    DOCKER --> ACR["📦 Azure Container Registry"]
-
-    ACR --> ACA["☁️ Azure Container Apps"]
-    ACR --> APP["🌐 Azure App Service<br/>Web App for Containers"]
-    ACR --> ACI["⚡ Azure Container Instances"]
-
-    ACA --> PINE["📌 Pinecone"]
-    ACA --> GROQ["🤖 Groq"]
-
-    APP --> PINE
-    APP --> GROQ
-
-    ACI --> PINE
-    ACI --> GROQ
-```
-
-### Deployment options
-
-  -----------------------------------------------------------------------
-  Azure Service                       Best suited for
-  ----------------------------------- -----------------------------------
-  **Azure Container Apps**            Flexible containerized web
-                                      workloads
-
-  **Azure App Service --- Web App for Web application deployment
-  Containers**                        
-
-  **Azure Container Instances**       Quick/simple container demo
-  -----------------------------------------------------------------------
-
-All three can use the same Docker image.
-
-------------------------------------------------------------------------
-
-# 📦 Azure Deployment Flow
-
-``` text
-                    LOCAL MACHINE
-                         │
-                         ▼
-                 docker build
-                         │
-                         ▼
-                 🐳 Docker Image
-                         │
-                         ▼
-              Azure Container Registry
-                         │
-                         ▼
-                Select Azure Service
-                 /       |        \
-                /        |         \
-               ▼         ▼          ▼
-             ACA       App       ACI
-               \         |        /
-                \        |       /
-                 ▼       ▼      ▼
-                  RAG API
-                     │
-              ┌──────┴──────┐
-              ▼             ▼
-          Pinecone         Groq
-```
-
-------------------------------------------------------------------------
-
-# 🔐 Azure Configuration
-
-API keys should be supplied as **environment variables / secrets**
-rather than being written into the image.
-
-Conceptually:
-
-``` text
-Azure Container
-      │
-      ├── PINECONE_API_KEY
-      ├── GROQ_API_KEY
-      └── PORT
-```
-
-The application can then access the configuration through `config.py`.
-
-------------------------------------------------------------------------
-
-# 🔌 External Services
-
-## 📌 Pinecone
-
-Used as the vector database.
-
-``` text
-Documents
-   ↓
-Chunks
-   ↓
-Embeddings
-   ↓
-Pinecone
-   ↓
-Similarity Search
-```
-
-## 🤖 Groq
-
-Used for LLM inference.
-
-``` text
-User Question
-      +
-Retrieved Context
-      ↓
-    Groq
-      ↓
-Generated Answer
-```
-
-------------------------------------------------------------------------
-
-# 🧠 RAG Components
-
-``` text
-┌───────────────────────────────────────────────┐
-│                  RAG PIPELINE                 │
-├───────────────────────────────────────────────┤
-│                                               │
-│  📄 Loader                                    │
-│      ↓                                        │
-│  ✂️ Splitter                                  │
-│      ↓                                        │
-│  🧠 Embedding Model                           │
-│      ↓                                        │
-│  📌 Pinecone                                  │
-│      ↓                                        │
-│  🔎 Retrieval                                 │
-│      ↓                                        │
-│  📚 Context                                   │
-│      ↓                                        │
-│  🤖 Groq / Llama                              │
-│      ↓                                        │
-│  💬 Answer + Sources                           │
-│                                               │
-└───────────────────────────────────────────────┘
-```
-
-------------------------------------------------------------------------
-
-# ⚡ Startup Optimization
-
-The embedding model and Pinecone connection are loaded **once during
-application startup**, rather than being initialized for every request.
-
-Conceptually:
-
-``` text
-Application Startup
-        │
-        ├── Load configuration
-        ├── Initialize embedding model
-        └── Initialize Pinecone connection
-                 │
-                 ▼
-            Ready to serve
-                 │
-       ┌─────────┴─────────┐
-       ▼                   ▼
-  /api/ingest          /api/ask
-```
-
-The first request after boot may therefore be slightly slower while the
-model warms up.
-
-------------------------------------------------------------------------
-
-# 🌐 CORS
-
-CORS is **not currently configured**.
-
-That is sufficient when the browser UI and API are served from the same
-FastAPI application.
-
-If the frontend is later moved to another domain, add FastAPI's CORS
-middleware.
-
-Example:
-
-``` python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://your-frontend-domain.com"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
-For production, prefer explicitly listing trusted origins rather than
-allowing every origin.
-
-------------------------------------------------------------------------
-
-# 🧱 Design Philosophy
-
-This project follows a clean separation of responsibilities:
-
-``` text
-┌───────────────────────┐
-│      Presentation     │
-│  HTML / Browser UI    │
-└───────────┬───────────┘
-            │
-┌───────────▼───────────┐
-│       API Layer       │
-│       FastAPI         │
-└───────────┬───────────┘
-            │
-┌───────────▼───────────┐
-│    RAG Orchestration  │
-│      pipeline.py      │
-└───────────┬───────────┘
-            │
-     ┌──────┼───────┐
-     ▼      ▼       ▼
-  Loader  Embedder  Generator
-     │      │       │
-     └──────┴───┬───┘
-                ▼
-             Pinecone
-```
-
-This makes it easier to:
-
--   Replace the UI
--   Change the API layer
--   Change the embedding implementation
--   Change the vector database
--   Change the LLM provider
--   Run the same RAG core from another application
-
-------------------------------------------------------------------------
-
-# 🛡️ Production Checklist
-
-Before deploying publicly:
-
--   [ ] Never commit `.env`
--   [ ] Store API keys as Azure secrets/environment variables
--   [ ] Add authentication if the API is publicly accessible
--   [ ] Restrict CORS origins when using a separate frontend
--   [ ] Add request/file-size validation
--   [ ] Add structured logging
--   [ ] Add error handling around external APIs
--   [ ] Configure health checks
--   [ ] Verify Pinecone index configuration
--   [ ] Verify Groq API access
--   [ ] Test the Docker image locally before pushing
--   [ ] Test `/api/health` after Azure deployment
-
-------------------------------------------------------------------------
-
-# 🗺️ Project Roadmap
-
-``` text
-                         RAG PIPELINE
-                              │
-       ┌──────────────────────┼──────────────────────┐
-       │                      │                      │
-       ▼                      ▼                      ▼
-   📄 Ingestion          🔎 Retrieval           🤖 Generation
-       │                      │                      │
-       └──────────────────────┼──────────────────────┘
-                              │
-                              ▼
-                        ⚡ FastAPI API
-                              │
-                              ▼
-                        🐳 Docker
-                              │
-                              ▼
-                         ☁️ Azure
-```
-
-### Potential future improvements
-
--   🔐 API authentication
--   📊 Monitoring and observability
--   🧪 Automated tests
--   ⚡ Streaming LLM responses
--   📚 Multi-document management
--   👤 User-specific document collections
--   💾 Conversation history
--   🔎 Better source/citation rendering
--   🖥️ Separate production frontend
--   📈 Evaluation of retrieval quality
-
-------------------------------------------------------------------------
-
-# 🧑‍💻 Quick Start
-
-``` bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Configure secrets
-cp .env.example .env
-
-# 3. Start locally
-uvicorn main:app --reload
-
-# 4. Or build Docker image
-docker build -t rag-pipeline .
-
-# 5. Run container
-docker run -p 8000:8000 --env-file .env rag-pipeline
+```bash
+docker run -p 8000:8000 --env-file .env docuflux-ai
 ```
 
 Then open:
 
-``` text
+```text
 http://localhost:8000
 ```
 
-------------------------------------------------------------------------
+### Docker Architecture
 
-# ⭐ Key Features
+```mermaid
+flowchart LR
 
-  Feature                                   Status
-  --------------------------------- ----------------------
-  PDF ingestion                               ✅
-  Document chunking                           ✅
-  Sentence-transformer embeddings             ✅
-  Pinecone vector search                      ✅
-  Groq LLM generation                         ✅
-  Source citations                            ✅
-  FastAPI REST API                            ✅
-  Browser UI                                  ✅
-  Docker support                              ✅
-  Azure-ready container                       ✅
-  Health endpoint                             ✅
-  CORS                               ⚙️ Optional / future
-  Authentication                          🔜 Future
+    U["👤 User"] --> C["🐳 Docker Container"]
 
-------------------------------------------------------------------------
+    C --> F["⚡ FastAPI"]
+    F --> R["🧠 RAG Pipeline"]
 
-# 📜 License
+    R --> P["🌲 Pinecone"]
+    R --> G["🤖 Groq"]
 
-Add your project's license here, for example:
+    P --> R
+    G --> R
 
-``` text
-MIT License
+    R --> F
+    F --> U
 ```
 
-------------------------------------------------------------------------
+---
+
+# ☁️ Azure Deployment
+
+DocuFlux AI is designed so the FastAPI application can run inside a containerized cloud environment.
+
+Recommended architecture:
+
+```text
+                   ☁️ Microsoft Azure
+                         │
+                         ▼
+                ┌─────────────────┐
+                │  Azure Container │
+                │      App / Web   │
+                │       App        │
+                └────────┬────────┘
+                         │
+                         ▼
+                  🐳 Docker Image
+                         │
+                         ▼
+                    ⚡ FastAPI
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+        🌲 Pinecone              🤖 Groq
+       Vector Search           LLM Generation
+```
+
+Environment variables should be configured through the Azure deployment environment rather than committing credentials into the repository.
+
+---
+
+# 🔐 Security
+
+Never expose:
+
+```text
+PINECONE_API_KEY
+GROQ_API_KEY
+```
+
+inside:
+
+* ❌ Python source code
+* ❌ README
+* ❌ GitHub commits
+* ❌ Dockerfile
+* ❌ screenshots
+* ❌ frontend JavaScript
+
+Use:
+
+```text
+.env
+```
+
+locally and environment configuration in production.
+
+---
+
+# 📊 Current RAG Configuration
+
+```text
+┌─────────────────────────────────────┐
+│          DOCUFLUX CONFIG            │
+├─────────────────────────────────────┤
+│ Embedding Model : all-MiniLM-L6-v2 │
+│ Dimensions      : 384               │
+│ Chunk Size      : 500               │
+│ Chunk Overlap   : 50                │
+│ Top-K           : 4                 │
+│ Vector Metric   : cosine             │
+│ Vector DB       : Pinecone          │
+│ LLM             : Groq              │
+│ API             : FastAPI           │
+│ Input           : PDF               │
+└─────────────────────────────────────┘
+```
+
+---
+
+# 🎯 Key Features
+
+* 📄 Multi-PDF ingestion
+* 🔍 Semantic vector search
+* 🧠 Sentence Transformer embeddings
+* 🌲 Pinecone vector database
+* 🤖 Groq-powered generation
+* 📚 Source-aware answers
+* 📌 Page-level source information
+* ⚡ FastAPI backend
+* 🎨 Modern responsive UI
+* 🐳 Docker-ready
+* ☁️ Azure-ready
+* 🧪 Automated testing
+* 🔐 Environment-based secret management
+
+---
+
+# 🧠 Design Philosophy
+
+DocuFlux AI follows a simple principle:
+
+> **Retrieve first. Generate second.**
+
+Instead of asking an LLM to blindly answer a question, the application first searches the user's document collection and supplies the most relevant context.
+
+```text
+                Traditional LLM
+
+Question ───────────────► LLM
+                             │
+                             ▼
+                         Answer
+                      ❓ May hallucinate
+
+
+                    DocuFlux AI
+
+Question
+   │
+   ▼
+Vector Search
+   │
+   ▼
+Relevant Documents
+   │
+   ▼
+Groq LLM
+   │
+   ▼
+Grounded Answer
+   │
+   ▼
+Sources + Pages
+```
+
+---
+
+# 🔬 Technical Highlights
+
+### PDF Processing
+
+`pypdf` extracts text and page-level metadata from PDF files.
+
+### Embeddings
+
+Sentence Transformers converts documents and queries into dense vectors.
+
+### Vector Search
+
+Pinecone performs similarity search over stored embeddings.
+
+### Generation
+
+Groq generates answers using the retrieved document context.
+
+### Pipeline
+
+All components are orchestrated by `RAGPipeline`.
+
+---
+
+# 🚧 Future Improvements
+
+The architecture can be extended with:
+
+* 🔄 Streaming RAG responses
+* 📑 Support for DOCX / TXT / HTML
+* 🧠 Hybrid keyword + vector search
+* 🔐 User authentication
+* 👥 Multi-user document collections
+* 🗂️ Document management
+* 🧹 Duplicate-document detection
+* 📊 Retrieval analytics
+* 🧪 RAG evaluation metrics
+* 📝 Conversation history
+* 💾 Persistent chat sessions
+* 🎯 Metadata filtering
+* 🔀 Reranking models
+* 📈 Observability and logging
+* ⚡ Async ingestion
+* ☁️ Azure Blob Storage
+* 🔑 Azure Key Vault
+* 📦 CI/CD with GitHub Actions
+
+---
+
+# 🛣️ Roadmap
+
+```text
+             DOCUFLUX AI ROADMAP
+
+                    CURRENT
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ PDF → RAG → LLM │
+              └────────┬────────┘
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+       Streaming    Auth       More Formats
+          │            │            │
+          └────────────┼────────────┘
+                       ▼
+                 Hybrid Search
+                       │
+                       ▼
+                   Reranking
+                       │
+                       ▼
+                RAG Evaluation
+                       │
+                       ▼
+              Production Platform
+```
+
+---
+
+# 🏆 What This Project Demonstrates
+
+This project demonstrates practical implementation of:
+
+```text
+Python
+   │
+   ├── FastAPI
+   │
+   ├── REST APIs
+   │
+   ├── PDF Processing
+   │
+   ├── Text Chunking
+   │
+   ├── NLP Embeddings
+   │
+   ├── Vector Databases
+   │
+   ├── Semantic Search
+   │
+   ├── RAG Architecture
+   │
+   ├── LLM Integration
+   │
+   ├── Docker
+   │
+   └── Cloud Deployment
+```
+
+It is therefore more than a chatbot — it is a complete **document intelligence pipeline**.
+
+---
 
 # 👨‍💻 Author
 
 **Bhababhanjan Panda**
 
-> Built as a containerized RAG web service using FastAPI, Pinecone,
-> sentence-transformers, Groq, Docker and Azure-ready deployment
-> architecture.
+> Building practical AI, Machine Learning, Data Science and Full-Stack projects.
 
-------------------------------------------------------------------------
+---
 
-```{=html}
+# ⭐ Support
+
+If you found **DocuFlux AI** useful:
+
+⭐ Star the repository
+🍴 Fork the project
+🐛 Report issues
+💡 Suggest improvements
+🚀 Build something with it
+
+---
+
 <p align="center">
-```
-`<strong>`{=html}📄 Your Documents → 🔎 Retrieval → 🧠 Context → 🤖 LLM
-→ 💬 Answers`</strong>`{=html}
-```{=html}
+
+### 💜 Built with Python + FastAPI + Pinecone + Sentence Transformers + Groq
+
+**DocuFlux AI — Turn documents into knowledge.**
+
 </p>
-```
-```{=html}
-<p align="center">
-```
-⭐ If this project helped you, consider giving the repository a star!
-```{=html}
-</p>
-```
