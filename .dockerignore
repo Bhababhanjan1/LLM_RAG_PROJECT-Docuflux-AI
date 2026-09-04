@@ -1,0 +1,16 @@
+.git
+.gitignore
+.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+venv/
+.venv/
+rag_Docker_Azure_venv/
+tests/
+data/
+*.log
